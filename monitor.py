@@ -1,8 +1,11 @@
 import json
 import os
 import requests
+import smtplib
+
 from bs4 import BeautifulSoup
 from urllib.parse import quote
+from email.mime.text import MIMEText
 
 # =========================
 # 設定
@@ -13,6 +16,43 @@ LISTINGS_FILE = "data/listings.json"
 headers = {
     "User-Agent": "Mozilla/5.0"
 }
+
+# =========================
+# Gmail
+# =========================
+
+GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS")
+APP_PASSWORD = os.getenv("APP_PASSWORD")
+
+def send_email(title, url):
+
+    print("📧 send_email() 被呼叫")
+
+    msg = MIMEText(
+        f"標題：{title}\n\n網址：{url}"
+    )
+
+    msg["Subject"] = "🎸 ES359 Monitor Alert"
+    msg["From"] = GMAIL_ADDRESS
+    msg["To"] = GMAIL_ADDRESS
+
+    server = smtplib.SMTP(
+        "smtp.gmail.com",
+        587
+    )
+
+    server.starttls()
+
+    server.login(
+        GMAIL_ADDRESS,
+        APP_PASSWORD
+    )
+
+    server.send_message(msg)
+
+    server.quit()
+
+    print("✅ Email 已送出")
 
 # =========================
 # 讀取已記錄網址
@@ -85,10 +125,16 @@ for keyword in keywords:
                 print("🆕 新發現！")
                 print(f"標題：{title}")
                 print(f"網址：{url}")
+                print("📧 準備寄信...")
                 print()
 
                 known_urls.add(url)
                 new_urls.append(url)
+
+                send_email(
+                    title,
+                    url
+                )
 
             else:
 
